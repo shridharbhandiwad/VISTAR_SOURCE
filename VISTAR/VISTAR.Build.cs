@@ -12,7 +12,9 @@ public class VISTAR : ModuleRules
 			"Core", "CoreUObject", "UMG",
             "Engine", "InputCore",
             "Json", "JsonUtilities",
-			"Sockets", "Networking"});
+			"Sockets", "Networking",
+			"ProceduralMeshComponent"  // Required for terrain tile mesh generation
+		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
