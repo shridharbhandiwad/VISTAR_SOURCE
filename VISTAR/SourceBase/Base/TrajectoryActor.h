@@ -55,7 +55,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Spline")
 	UMaterialInterface* SplineMaterial; // Optional material
 
-	void TransmitSelfInfo() override;
+	virtual void TransmitSelfInfo() override;
 
 	UFUNCTION(BlueprintCallable, Category = "Spline")
 	void BuildSplineMeshes();

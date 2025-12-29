@@ -34,6 +34,6 @@ public:
 	void AttachTrajectory(FString trajectoryName);
 
 
-	void TransmitSelfInfo() override;
+	virtual void TransmitSelfInfo() override;
 
 };
