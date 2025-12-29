@@ -111,7 +111,7 @@ void AMyGameMode::BeginPlay()
     FoliageMgr->TerrainManager = TerrainMgr;
     
     // Add tree type
-    FFoliageType TreeType;
+    FVistarFoliageTypeData TreeType;
     TreeType.TypeName = "Pine";
     TreeType.Mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Meshes/PineTree"));
     TreeType.DensityPerKm2 = 500.0f;
