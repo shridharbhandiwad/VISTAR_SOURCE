@@ -77,6 +77,7 @@ void ATerrainTile::GenerateMesh()
     TArray<FVector> Normals;
     TArray<FVector2D> UVs;
     TArray<FColor> VertexColors;
+    TArray<FProcMeshTangent> Tangents;
 
     GenerateMeshData(CurrentLOD, Vertices, Triangles, Normals, UVs, VertexColors);
 
@@ -84,7 +85,7 @@ void ATerrainTile::GenerateMesh()
     ProceduralMesh->ClearAllMeshSections();
 
     // Create new mesh section
-    ProceduralMesh->CreateMeshSection(0, Vertices, Triangles, Normals, UVs, VertexColors, true);
+    ProceduralMesh->CreateMeshSection(0, Vertices, Triangles, Normals, UVs, VertexColors, Tangents, true);
 
     // Apply material if set
     if (Config.TerrainMaterial)
@@ -231,7 +232,7 @@ void ATerrainTile::GenerateMeshData(int32 LODLevel, TArray<FVector>& Vertices, T
                                      TArray<FVector>& Normals, TArray<FVector2D>& UVs, TArray<FColor>& VertexColors)
 {
     // Calculate resolution based on LOD (halve resolution per LOD level)
-    int32 LODDivisor = FMath::Pow(2, LODLevel);
+    int32 LODDivisor = 1 << LODLevel;
     int32 Resolution = FMath::Max(2, Config.TileResolution / LODDivisor);
 
     float StepX = Config.TileSizeX / Resolution;
