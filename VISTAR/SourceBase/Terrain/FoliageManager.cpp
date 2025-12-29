@@ -16,7 +16,7 @@ AFoliageManager::AFoliageManager()
     MaxGenerationTimePerFrame = 0.016f; // ~16ms per frame
 
     // Set up default foliage types
-    FFoliageType TreeType;
+    FVistarFoliageTypeData TreeType;
     TreeType.TypeName = "Tree";
     TreeType.DensityPerKm2 = 500.0f;
     TreeType.MinScale = 0.8f;
@@ -26,7 +26,7 @@ AFoliageManager::AFoliageManager()
     TreeType.CullDistance = 1000000.0f;
     FoliageTypes.Add(TreeType);
 
-    FFoliageType BushType;
+    FVistarFoliageTypeData BushType;
     BushType.TypeName = "Bush";
     BushType.DensityPerKm2 = 1000.0f;
     BushType.MinScale = 0.6f;
@@ -84,20 +84,20 @@ void AFoliageManager::InitializeFoliage()
     RandomStream.Initialize(FoliageConfig.FoliageSeed);
 
     // Create HISM components for each foliage type that has a mesh
-    for (const FFoliageType& FoliageType : FoliageTypes)
+    for (const FVistarFoliageTypeData& FoliageTypeData : FoliageTypes)
     {
-        if (FoliageType.Mesh)
+        if (FoliageTypeData.Mesh)
         {
-            UHierarchicalInstancedStaticMeshComponent* HISM = CreateHISMComponent(FoliageType);
+            UHierarchicalInstancedStaticMeshComponent* HISM = CreateHISMComponent(FoliageTypeData);
             if (HISM)
             {
-                HISMComponents.Add(FoliageType.TypeName, HISM);
-                UE_LOG(LogTemp, Log, TEXT("FoliageManager: Created HISM for %s"), *FoliageType.TypeName);
+                HISMComponents.Add(FoliageTypeData.TypeName, HISM);
+                UE_LOG(LogTemp, Log, TEXT("FoliageManager: Created HISM for %s"), *FoliageTypeData.TypeName);
             }
         }
         else
         {
-            UE_LOG(LogTemp, Warning, TEXT("FoliageManager: No mesh set for foliage type %s"), *FoliageType.TypeName);
+            UE_LOG(LogTemp, Warning, TEXT("FoliageManager: No mesh set for foliage type %s"), *FoliageTypeData.TypeName);
         }
     }
 
@@ -268,14 +268,14 @@ void AFoliageManager::UpdateStreaming(FVector CameraPosition)
     // This function can be expanded for custom streaming behavior
 }
 
-UHierarchicalInstancedStaticMeshComponent* AFoliageManager::CreateHISMComponent(const FFoliageType& FoliageType)
+UHierarchicalInstancedStaticMeshComponent* AFoliageManager::CreateHISMComponent(const FVistarFoliageTypeData& FoliageTypeData)
 {
-    UHierarchicalInstancedStaticMeshComponent* HISM = NewObject<UHierarchicalInstancedStaticMeshComponent>(this, *FoliageType.TypeName);
+    UHierarchicalInstancedStaticMeshComponent* HISM = NewObject<UHierarchicalInstancedStaticMeshComponent>(this, *FoliageTypeData.TypeName);
     if (HISM)
     {
-        HISM->SetStaticMesh(FoliageType.Mesh);
+        HISM->SetStaticMesh(FoliageTypeData.Mesh);
         HISM->SetMobility(EComponentMobility::Static);
-        HISM->SetCullDistances(0, FoliageType.CullDistance);
+        HISM->SetCullDistances(0, FoliageTypeData.CullDistance);
         HISM->bAffectDistanceFieldLighting = false;
         HISM->bCastDynamicShadow = false;
         HISM->bCastStaticShadow = true;
@@ -311,8 +311,8 @@ void AFoliageManager::SpawnFoliageForTile(int32 TileX, int32 TileY)
     // Spawn each foliage type
     for (int32 TypeIndex = 0; TypeIndex < FoliageTypes.Num(); TypeIndex++)
     {
-        const FFoliageType& FoliageType = FoliageTypes[TypeIndex];
-        UHierarchicalInstancedStaticMeshComponent** HISMPtr = HISMComponents.Find(FoliageType.TypeName);
+        const FVistarFoliageTypeData& FoliageTypeData = FoliageTypes[TypeIndex];
+        UHierarchicalInstancedStaticMeshComponent** HISMPtr = HISMComponents.Find(FoliageTypeData.TypeName);
         if (!HISMPtr || !*HISMPtr)
         {
             continue;
@@ -321,7 +321,7 @@ void AFoliageManager::SpawnFoliageForTile(int32 TileX, int32 TileY)
         UHierarchicalInstancedStaticMeshComponent* HISM = *HISMPtr;
 
         // Calculate number of instances for this tile
-        int32 NumInstances = FMath::RoundToInt(FoliageType.DensityPerKm2 * TileAreaKm2);
+        int32 NumInstances = FMath::RoundToInt(FoliageTypeData.DensityPerKm2 * TileAreaKm2);
 
         // Calculate minimum distance between instances (for Poisson-like distribution)
         float MinDistance = FMath::Sqrt(TileSizeX * TileSizeY / NumInstances) * 0.5f;
@@ -344,7 +344,7 @@ void AFoliageManager::SpawnFoliageForTile(int32 TileX, int32 TileY)
             WorldPos.Z = Height;
 
             // Check height constraints
-            if (Height < FoliageType.MinSpawnHeight || Height > FoliageType.MaxSpawnHeight)
+            if (Height < FoliageTypeData.MinSpawnHeight || Height > FoliageTypeData.MaxSpawnHeight)
             {
                 continue;
             }
@@ -352,7 +352,7 @@ void AFoliageManager::SpawnFoliageForTile(int32 TileX, int32 TileY)
             // Get surface normal and check slope
             FVector Normal = GetSurfaceNormal(WorldPos);
             float Slope = FMath::Acos(FVector::DotProduct(Normal, FVector::UpVector));
-            if (Slope > FoliageType.MaxSpawnSlope)
+            if (Slope > FoliageTypeData.MaxSpawnSlope)
             {
                 continue;
             }
@@ -362,23 +362,23 @@ void AFoliageManager::SpawnFoliageForTile(int32 TileX, int32 TileY)
             InstanceTransform.SetLocation(WorldPos);
 
             // Random scale
-            float Scale = TileRandom.FRandRange(FoliageType.MinScale, FoliageType.MaxScale);
+            float Scale = TileRandom.FRandRange(FoliageTypeData.MinScale, FoliageTypeData.MaxScale);
             InstanceTransform.SetScale3D(FVector(Scale));
 
             // Random rotation
             FRotator Rotation = FRotator::ZeroRotator;
-            if (FoliageType.bRandomYaw)
+            if (FoliageTypeData.bRandomYaw)
             {
                 Rotation.Yaw = TileRandom.FRandRange(0.0f, 360.0f);
             }
-            if (FoliageType.RandomPitchRange > 0.0f)
+            if (FoliageTypeData.RandomPitchRange > 0.0f)
             {
-                Rotation.Pitch = TileRandom.FRandRange(-FoliageType.RandomPitchRange, FoliageType.RandomPitchRange);
-                Rotation.Roll = TileRandom.FRandRange(-FoliageType.RandomPitchRange, FoliageType.RandomPitchRange);
+                Rotation.Pitch = TileRandom.FRandRange(-FoliageTypeData.RandomPitchRange, FoliageTypeData.RandomPitchRange);
+                Rotation.Roll = TileRandom.FRandRange(-FoliageTypeData.RandomPitchRange, FoliageTypeData.RandomPitchRange);
             }
 
             // Align to surface if enabled
-            if (FoliageType.bAlignToSurface)
+            if (FoliageTypeData.bAlignToSurface)
             {
                 FVector Forward = FVector::CrossProduct(FVector::RightVector, Normal).GetSafeNormal();
                 FVector Right = FVector::CrossProduct(Normal, Forward).GetSafeNormal();

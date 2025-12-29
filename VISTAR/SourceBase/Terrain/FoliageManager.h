@@ -11,9 +11,10 @@
 
 /**
  * Foliage type definition
+ * Note: Named FVistarFoliageTypeData to avoid conflict with engine's UFoliageType
  */
 USTRUCT(BlueprintType)
-struct VISTAR_API FFoliageType
+struct VISTAR_API FVistarFoliageTypeData
 {
     GENERATED_BODY()
 
@@ -79,7 +80,7 @@ public:
 
     // Foliage types to spawn
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Foliage")
-    TArray<FFoliageType> FoliageTypes;
+    TArray<FVistarFoliageTypeData> FoliageTypes;
 
     // Reference to terrain manager
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Foliage")
@@ -155,7 +156,7 @@ protected:
 
 private:
     // Create HISM component for a foliage type
-    UHierarchicalInstancedStaticMeshComponent* CreateHISMComponent(const FFoliageType& FoliageType);
+    UHierarchicalInstancedStaticMeshComponent* CreateHISMComponent(const FVistarFoliageTypeData& FoliageTypeData);
 
     // Spawn foliage instances for a tile
     void SpawnFoliageForTile(int32 TileX, int32 TileY);
